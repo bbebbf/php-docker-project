@@ -1,0 +1,5 @@
+/.env
+/data/*
+/documentation/structurizr/.structurizr/*
+/images/websrv-php/msmtp.conf
+/src/web/vendor/*

@@ -1,0 +1,53 @@
+services:
+
+  mssql-database:
+    image: mcr.microsoft.com/mssql/server:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: "Developer"
+    volumes:
+      - "./data/mssql/data:/var/opt/mssql/data:Z"
+    ports:
+      - "1433:1433"
+
+  webapp:
+    build:
+      context: ./images/websrv-php
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      APACHE_DOCUMENT_ROOT: "/var/www/html/public"
+    volumes:
+      - "./src/web:/var/www/html:Z"
+    ports:
+      - "8082:80"
+    depends_on:
+      - mssql-database
+
+  mockups:
+    build:
+      context: ./images/websrv-php
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - "./src/mockups:/var/www/html:Z"
+    ports:
+      - "8083:80"
+    profiles:
+      - mockups
+
+  structurizr:
+    image: structurizr/lite
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - "./documentation/structurizr:/usr/local/structurizr:Z"
+    ports:
+      - "8084:8080"
+    profiles:
+      - documentation
