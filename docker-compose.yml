@@ -1,6 +1,7 @@
 services:
 
   mssql-database:
+    hostname: ${DB_HOST}
     image: mcr.microsoft.com/mssql/server:latest
     restart: unless-stopped
     environment:
@@ -20,6 +21,10 @@ services:
     environment:
       TZ: ${TZ}
       APACHE_DOCUMENT_ROOT: "/var/www/html/public"
+      DB_HOST:
+      DB_USER:
+      DB_PASSWORD:
+      DB_NAME:
     volumes:
       - "./src/web:/var/www/html:Z"
     ports:
