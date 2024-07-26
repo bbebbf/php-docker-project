@@ -1,1 +1,0 @@
-vendor/bin/phpunit --verbose app/lib/records/tests

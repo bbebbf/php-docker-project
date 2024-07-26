@@ -5,15 +5,13 @@ namespace App\Lib\Records;
 
 class FieldsCollection implements IntfFieldsCollection {
 
-    function __construct() {
-        $this->values = new Utils\FieldsMap();
-    }
-
     public function initializeField(string $fieldName, mixed $fieldValue) {
+        $this->createFieldsMap();
         $this->values->setValue($fieldName, $fieldValue);
     }
 
     public function tryGetFieldValue(string $fieldName, mixed &$fieldValue): bool {
+        $this->createFieldsMap();
         return $this->values->tryGetValue($fieldName, $fieldValue);
     }
 
@@ -26,9 +24,16 @@ class FieldsCollection implements IntfFieldsCollection {
     }
 
     public function fieldExists(string $fieldName): bool {
+        $this->createFieldsMap();
         return $this->values->keyExists($fieldName);
     }
 
-    private $values;
+    public function createFieldsMap() {
+        if (is_null($this->values)) {
+            $this->values = new Utils\FieldsMap();
+        }
+    }
+
+    private $values = null;
 }
 ?>
