@@ -7,6 +7,20 @@ use App\Lib\Records\Utils\FieldsMap;
 
 class JsonConfig {
 
+    public static function load(string $filepath) {
+        $content = file_get_contents($filepath);
+        if ($content === false) {
+            $content = "";
+        }
+        else {
+            // Removing UTF8-BOM
+            if (strpos($content, "\xEF\xBB\xBF") === 0) {
+                $content = substr($content, 3);
+            }
+        }
+        return new JsonConfig($content);
+    }
+
     function __construct(string $jsonstr) {
         $this->jsonstr = $jsonstr;
     }
@@ -31,7 +45,7 @@ class JsonConfig {
             return;
         }
         $this->values = new FieldsMap();
-        $decoded = json_decode($this->jsonstr, true);
+        $decoded = json_decode($this->jsonstr, true, 2);
         if (!is_array($decoded)) {
             return;
         }

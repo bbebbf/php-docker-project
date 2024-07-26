@@ -11,7 +11,7 @@ final class JsonConfigTest extends TestCase
     public function testUsername()
     {
         $config = $this->createConfig("{\"Username\": \"Hello {\$TEST_USERNAME} accessing {\$DB_NAME}.\" }");
-        $this->assertEquals("Hello sa accessing test_data.", $config->getValue("Username"));
+        $this->assertEquals("Hello MyUsername accessing test_data.", $config->getValue("Username"));
     }
 
     public function testUnicode()
@@ -30,6 +30,13 @@ final class JsonConfigTest extends TestCase
     {
         $config = $this->createConfig("{\"Username\": \"Hello {\$USÄRNÄME}.\" }");
         $this->assertEquals("Hello .", $config->getValue("Username"));
+    }
+
+    public function testLoadFilepath()
+    {
+        $config = JsonConfig::load(dirname(__FILE__)."/testconf.json");
+        $this->assertEquals("Are you happy?", $config->getValue("Question"));
+        $this->assertEquals("Maybe", $config->getValue("Answer"));
     }
 
     private function createConfig($json)
