@@ -1,34 +1,14 @@
-<?php
-  require dirname(__DIR__) . "/vendor/autoload.php";
-?>
 <html>
-<title>Hallo von Docker</title>
+  <head>
+    <title>Hallo von Docker</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+  </head>
 <body>
-<div>
-    <pre>
-    <?php print("DB_HOST = ".$_ENV["DB_HOST"]."\n"); ?>
-    <?php print("DB_USER = ".$_ENV["DB_USER"]."\n"); ?>
-    <?php print("DB_PASSWORD = ".$_ENV["DB_PASSWORD"]."\n"); ?>
-    <?php print("DB_NAME = ".$_ENV["DB_NAME"]."\n"); ?>
-    </pre>
-</div>
-<?php
-    try {
-        $dbh = new PDO("sqlsrv:Server=".$_ENV["DB_HOST"].";Database=".$_ENV["DB_NAME"],
-        $_ENV["DB_USER"], $_ENV["DB_PASSWORD"],
-        array());
-        print("Successfully connected to database '".$_ENV["DB_NAME"]."'.");
-    }
-    catch (PDOException $e) {
-        print("Error occurred while connecting to database '".$_ENV["DB_NAME"]."'.");
-        print_r($e);
-    }
-    
-?>
-<div>
-<?php
-    phpinfo();
-?>
-</div>
+<h1>Hauptmenü</h1>
+<ul>
+<li><a href="/phpinfo.php">PHP Info</a></li>
+<li><a href="/dbinfo.php">Datenbank-Info</a></li>
+<li><a href="/playgound.php">Spielwiese</a></li>
+</ul>
 </body>
 </html>
