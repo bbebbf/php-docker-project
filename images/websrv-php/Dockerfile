@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 ENV MSMTP_CONF_FILE 'msmtp.conf'
 
@@ -38,8 +38,9 @@ RUN docker-php-ext-install mysqli bcmath gd
 
 # SQL-Server drivers
 ENV ACCEPT_EULA=Y
-RUN apt-get update && apt-get install -y gnupg2
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - 
+RUN apt-get update && apt-get install -y gnupg2 
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc
+## RUN gpg --import /tmp/microsoft.asc
 RUN curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list 
 RUN apt-get update 
 RUN ACCEPT_EULA=Y apt-get -y --no-install-recommends install msodbcsql17 unixodbc-dev 
@@ -47,8 +48,8 @@ RUN pecl install sqlsrv
 RUN pecl install pdo_sqlsrv
 RUN docker-php-ext-enable sqlsrv pdo_sqlsrv
 
-RUN echo "set sendmail=\"/usr/bin/msmtp -t\"" > /etc/mail.rc && \
-    echo "sendmail_path=\"/usr/bin/msmtp -t\"" >> /usr/local/etc/php/conf.d/php-sendmail.ini
+# RUN echo "set sendmail=\"/usr/bin/msmtp -t\"" > /etc/mail.rc && \
+#    echo "sendmail_path=\"/usr/bin/msmtp -t\"" >> /usr/local/etc/php/conf.d/php-sendmail.ini
 
-COPY ${MSMTP_CONF_FILE} /etc/msmtprc
-RUN chmod a=r /etc/msmtprc
+## COPY ${MSMTP_CONF_FILE} /etc/msmtprc
+## RUN chmod a=r /etc/msmtprc

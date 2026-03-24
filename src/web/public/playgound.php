@@ -6,11 +6,25 @@
 <body>
 <h1>Spielwiese</h1>
 <pre>
-<?php
-include(dirname(__FILE__)."/inc/Cars.php");
 
-$mycar = new Car("LER OI-110");
+<?php
+   require_once(__DIR__ . '/inc/SelectPages.php');
+
+
+   $dbh = new PDO("sqlsrv:Server=".$_ENV["DB_HOST"].";Database=".$_ENV["DB_NAME"],
+        $_ENV["DB_USER"], $_ENV["DB_PASSWORD"],
+        array());
+
+    $selectPages = new SelectPages(
+        $dbh,
+        'SELECT * FROM dbo.WP_Nachricht',
+        'Nachrichten_ID',
+        5
+    );
+    $result = $selectPages->fetch(8);
+    print_r($result);
 ?>
-</pre>    
+
+</pre>
 </body>
 </html>
