@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+namespace SelectPages;
+
 class SelectPagesResult {
     public bool $error = false;
     public array $data = [];
@@ -14,10 +16,10 @@ class SelectPages {
     private const PAGE_SIZE_PARAM_NAME = ':SelectPagesPageSize';
     private const TOTAL_ROWS_FIELD_NAME = 'SelectPagesTotalRows';
 
-    private ?PDOStatement $stmt = null;
+    private ?\PDOStatement $stmt = null;
 
     public function __construct(
-        private PDO $db,
+        private \PDO $db,
         private ISelectPagesSqlProvider $selectPagesSqlProvider,
         private string $selectSql,
         private string $orderBy,
@@ -37,8 +39,8 @@ class SelectPages {
             $this->stmt->bindValue($key, $value);
         }
         $offset = ($pageNo - 1) * $this->pageSize;
-        $this->stmt->bindValue(self::OFFSET_PARAM_NAME, $offset, PDO::PARAM_INT);
-        $this->stmt->bindValue(self::PAGE_SIZE_PARAM_NAME, $this->pageSize, PDO::PARAM_INT);
+        $this->stmt->bindValue(self::OFFSET_PARAM_NAME, $offset, \PDO::PARAM_INT);
+        $this->stmt->bindValue(self::PAGE_SIZE_PARAM_NAME, $this->pageSize, \PDO::PARAM_INT);
 
         $result = new SelectPagesResult();
         $result->currentPage = $pageNo;
@@ -47,7 +49,7 @@ class SelectPages {
             $result->error = true;
         }
         else {
-            $stmtResult = $this->stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmtResult = $this->stmt->fetchAll(\PDO::FETCH_ASSOC);
             $this->stmt->closeCursor();
 
             $queryTotalRows = true;
@@ -81,7 +83,7 @@ class SelectPages {
                     $result->error = true;
                     return $result;
                 }
-                $totalRowCount = (int)$totalRowsStmt->fetch(PDO::FETCH_NUM)[0];
+                $totalRowCount = (int)$totalRowsStmt->fetch(\PDO::FETCH_NUM)[0];
                 $this->stmt->closeCursor();
             }
             $result->totalPages = $this->getTotalPages($totalRowCount);

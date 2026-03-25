@@ -17,16 +17,16 @@
         $_ENV["DB_USER"], $_ENV["DB_PASSWORD"],
         array());
 
-    $sqlServerSelectPagesSqlProvider = new SelectPagesSqlProviderMsSqlServer();
+    $sqlServerSelectPagesSqlProvider = new SelectPages\SelectPagesSqlProviderMsSqlServer();
 
-    $selectPages = new SelectPages(
+    $selectPages = new SelectPages\SelectPages(
         $dbh,
         $sqlServerSelectPagesSqlProvider,
         'SELECT * FROM dbo.WP_Nachricht',
         'Nachrichten_ID',
         5
     );
-    $result = $selectPages->fetch(5);
+    $result = $selectPages->fetch(1);
     print_r($result);
 ?>
 
