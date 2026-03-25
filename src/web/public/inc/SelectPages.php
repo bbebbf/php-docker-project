@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace SelectPages;
 
 class SelectPagesResult {
-    public bool $error = false;
-    public array $data = [];
-    public int $currentPage = 0;
-    public int $totalPages = 0;
+    public function __construct(
+        public readonly bool $error = false,
+        public readonly array $rows = [],
+        public readonly int $currentPage = 0,
+        public readonly int $totalPages = 0,
+    ) {}
 }
 
 class SelectPages {
@@ -42,11 +44,11 @@ class SelectPages {
         $this->stmt->bindValue(self::OFFSET_PARAM_NAME, $offset, \PDO::PARAM_INT);
         $this->stmt->bindValue(self::PAGE_SIZE_PARAM_NAME, $this->pageSize, \PDO::PARAM_INT);
 
-        $result = new SelectPagesResult();
-        $result->currentPage = $pageNo;
-
+        $sqlError = false;
+        $sqlResultRows = [];
+        $totalPages = 0;
         if ($this->stmt->execute() === false) {
-            $result->error = true;
+            $sqlError = true;
         }
         else {
             $stmtResult = $this->stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -57,20 +59,19 @@ class SelectPages {
 
             if (count($stmtResult) === 0) {
                 $queryTotalRows = ($pageNo > 1);
-                $result->data = [];
             }
             else {
                 if ($this->selectPagesSqlProvider->selectStmContainsTotalRows() === true) {
                     $queryTotalRows = false;
                     $totalRowCount = (int)$stmtResult[0][self::TOTAL_ROWS_FIELD_NAME];
-                    $result->data = array_map(function ($item) {
+                    $sqlResultRows = array_map(function ($item) {
                         unset($item[self::TOTAL_ROWS_FIELD_NAME]);
                         return $item;
                     }, $stmtResult);
                 }
                 else {
                     $queryTotalRows = true;
-                    $result->data = $stmtResult;
+                    $sqlResultRows = $stmtResult;
                 }
             }
 
@@ -80,15 +81,21 @@ class SelectPages {
                     $totalRowsStmt->bindValue($key, $value);
                 }
                 if ($totalRowsStmt->execute() === false) {
-                    $result->error = true;
-                    return $result;
+                    $sqlError = true;
                 }
-                $totalRowCount = (int)$totalRowsStmt->fetch(\PDO::FETCH_NUM)[0];
-                $this->stmt->closeCursor();
+                else {
+                    $totalRowCount = (int)$totalRowsStmt->fetch(\PDO::FETCH_NUM)[0];
+                    $totalRowsStmt->closeCursor();
+                }
             }
-            $result->totalPages = $this->getTotalPages($totalRowCount);
+            $totalPages = $this->getTotalPages($totalRowCount);
         }
-        return $result;
+        return new SelectPagesResult(
+            $sqlError,
+            $sqlResultRows,
+            $pageNo,
+            $totalPages,
+        );
     }
 
     private function getTotalPages(int $totalRows): int {
