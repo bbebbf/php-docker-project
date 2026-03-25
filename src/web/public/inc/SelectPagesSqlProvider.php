@@ -1,0 +1,18 @@
+<?php
+declare(strict_types=1);
+
+interface ISelectPagesSqlProvider {
+    public function selectStmContainsTotalRows(): bool;
+
+    public function getSelectStmInPages(
+        string $selectSql,
+        string $orderBy,
+        string $offsetParamName,
+        string $pageSizeParamName,
+        string $totalRowsFieldName
+    ): string;
+
+    public function getTotalRowsSelectStm(
+        string $selectSql
+    ): string;
+}

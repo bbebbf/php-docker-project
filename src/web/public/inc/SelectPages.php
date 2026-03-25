@@ -18,6 +18,7 @@ class SelectPages {
 
     public function __construct(
         private PDO $db,
+        private ISelectPagesSqlProvider $selectPagesSqlProvider,
         private string $selectSql,
         private string $orderBy,
         private int $pageSize,
@@ -49,8 +50,29 @@ class SelectPages {
             $stmtResult = $this->stmt->fetchAll(PDO::FETCH_ASSOC);
             $this->stmt->closeCursor();
 
-            if (count($stmtResult) === 0) {
+            $queryTotalRows = true;
+            $totalRowCount = 0;
 
+            if (count($stmtResult) === 0) {
+                $queryTotalRows = ($pageNo > 1);
+                $result->data = [];
+            }
+            else {
+                if ($this->selectPagesSqlProvider->selectStmContainsTotalRows() === true) {
+                    $queryTotalRows = false;
+                    $totalRowCount = (int)$stmtResult[0][self::TOTAL_ROWS_FIELD_NAME];
+                    $result->data = array_map(function ($item) {
+                        unset($item[self::TOTAL_ROWS_FIELD_NAME]);
+                        return $item;
+                    }, $stmtResult);
+                }
+                else {
+                    $queryTotalRows = true;
+                    $result->data = $stmtResult;
+                }
+            }
+
+            if ($queryTotalRows === true) {
                 $totalRowsStmt = $this->db->prepare($this->getTotalRowsSelectStm());
                 foreach ($bindValues as $key => $value) {
                     $totalRowsStmt->bindValue($key, $value);
@@ -59,19 +81,10 @@ class SelectPages {
                     $result->error = true;
                     return $result;
                 }
-                $totalRowsStmtResult = $totalRowsStmt->fetchAll(PDO::FETCH_ASSOC);
+                $totalRowCount = (int)$totalRowsStmt->fetch(PDO::FETCH_NUM)[0];
                 $this->stmt->closeCursor();
-
-                $result->totalPages = $this->getTotalPages((int)$totalRowsStmtResult[0][self::TOTAL_ROWS_FIELD_NAME]);
-                $result->data = [];
             }
-            else {
-                $result->totalPages = $this->getTotalPages((int)$stmtResult[0][self::TOTAL_ROWS_FIELD_NAME]);
-                $result->data = array_map(function ($item) {
-                    unset($item[self::TOTAL_ROWS_FIELD_NAME]);
-                    return $item;
-                }, $stmtResult);
-            }
+            $result->totalPages = $this->getTotalPages($totalRowCount);
         }
         return $result;
     }
@@ -82,19 +95,19 @@ class SelectPages {
 
     private function getSelectStmInPages(): string {
 
-        $result = 'with Data_CTE as (' . $this->selectSql . ')'
-            . ' select *, count(*) over() as ' . self::TOTAL_ROWS_FIELD_NAME
-            . ' from Data_CTE'
-            . ' order by ' . $this->orderBy
-            . ' offset ' . self::OFFSET_PARAM_NAME . ' rows fetch next ' . self::PAGE_SIZE_PARAM_NAME . ' rows only';
+        $result = $this->selectPagesSqlProvider->getSelectStmInPages(
+            $this->selectSql,
+            $this->orderBy,
+            self::OFFSET_PARAM_NAME,
+            self::PAGE_SIZE_PARAM_NAME,
+            self::TOTAL_ROWS_FIELD_NAME
+        );
         return $result;
     }
 
     private function getTotalRowsSelectStm(): string {
 
-        $result = 'with Data_CTE as (' . $this->selectSql . ')'
-            . ' select count(*) over() as ' . self::TOTAL_ROWS_FIELD_NAME
-            . ' from Data_CTE';
+        $result = $this->selectPagesSqlProvider->getTotalRowsSelectStm($this->selectSql);
         return $result;
     }
 }
