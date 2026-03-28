@@ -8,7 +8,6 @@ interface ISelectPagesSqlProvider {
 
     public function getSelectStmInPages(
         string $selectSql,
-        string $orderBy,
         string $offsetParamName,
         string $pageSizeParamName,
         string $totalRowsFieldName

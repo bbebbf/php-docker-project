@@ -24,7 +24,6 @@ class SelectPages {
         private \PDO $db,
         private ISelectPagesSqlProvider $selectPagesSqlProvider,
         private string $selectSql,
-        private string $orderBy,
         private int $pageSize,
     ) {}
 
@@ -106,7 +105,6 @@ class SelectPages {
 
         $result = $this->selectPagesSqlProvider->getSelectStmInPages(
             $this->selectSql,
-            $this->orderBy,
             self::OFFSET_PARAM_NAME,
             self::PAGE_SIZE_PARAM_NAME,
             self::TOTAL_ROWS_FIELD_NAME

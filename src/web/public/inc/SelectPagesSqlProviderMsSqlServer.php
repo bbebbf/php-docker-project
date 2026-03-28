@@ -11,11 +11,18 @@ class SelectPagesSqlProviderMsSqlServer implements ISelectPagesSqlProvider {
 
     public function getSelectStmInPages(
         string $selectSql,
-        string $orderBy,
         string $offsetParamName,
         string $pageSizeParamName,
         string $totalRowsFieldName
     ): string {
+
+        $orderBy = '1';
+        $selectParts = explode(' order by ', $selectSql);
+        if (count($selectParts) === 2) {
+            $selectSql = $selectParts[0];
+            $orderBy = $selectParts[1];
+        }
+
         $result = 'with Data_CTE as (' . $selectSql . ')'
             . ' select *, count(*) over() as ' . $totalRowsFieldName
             . ' from Data_CTE'

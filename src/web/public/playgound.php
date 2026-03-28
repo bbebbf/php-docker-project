@@ -22,8 +22,7 @@
     $selectPages = new SelectPages\SelectPages(
         $dbh,
         $sqlServerSelectPagesSqlProvider,
-        'SELECT * FROM dbo.WP_Nachricht',
-        'Nachrichten_ID',
+        'SELECT * FROM dbo.WP_Nachricht order by NachrichtenBetreff',
         5
     );
     $result = $selectPages->fetch(1);
