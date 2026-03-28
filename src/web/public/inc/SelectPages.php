@@ -14,44 +14,57 @@ class SelectPagesResult {
 
 class SelectPages {
 
-    private const OFFSET_PARAM_NAME = ':SelectPagesOffset';
-    private const PAGE_SIZE_PARAM_NAME = ':SelectPagesPageSize';
+    private const OFFSET_PARAM_NAME = 'SelectPagesOffset';
+    private const PAGE_SIZE_PARAM_NAME = 'SelectPagesPageSize';
     private const TOTAL_ROWS_FIELD_NAME = 'SelectPagesTotalRows';
 
-    private ?\PDOStatement $stmt = null;
+    private SqlParamsAccessor $sqlParamsAccessor;
 
     public function __construct(
         private \PDO $db,
         private ISelectPagesSqlProvider $selectPagesSqlProvider,
         private string $selectSql,
         private int $pageSize,
-    ) {}
-
-    public function __destruct() {
-        $this->stmt = null;
+    ) {
+        $this->sqlParamsAccessor = new SqlParamsAccessor();
     }
 
-    public function fetch(int $pageNo, array $bindValues = []): SelectPagesResult {
-        if ($this->stmt === null) {
-            $this->stmt = $this->db->prepare($this->getSelectStmInPages());
-        }
+    public function getParamTypeByName(string $paramName): int {
+        return $this->sqlParamsAccessor->getParamTypeByName($paramName);
+    }
 
-        foreach ($bindValues as $key => $value) {
-            $this->stmt->bindValue($key, $value);
-        }
+    public function setParamTypeByName(string $paramName, int $paramType): void {
+        $this->sqlParamsAccessor->setParamTypeByName($paramName, $paramType);
+    }
+
+    public function getParamValueByName(string $paramName): mixed {
+        return $this->sqlParamsAccessor->getParamValueByName($paramName);
+    }
+
+    public function setParamValueByName(string $paramName, mixed $paramValue): void {
+        $this->sqlParamsAccessor->setParamValueByName($paramName, $paramValue);
+    }
+
+    public function fetch(int $pageNo): SelectPagesResult {
+
         $offset = ($pageNo - 1) * $this->pageSize;
-        $this->stmt->bindValue(self::OFFSET_PARAM_NAME, $offset, \PDO::PARAM_INT);
-        $this->stmt->bindValue(self::PAGE_SIZE_PARAM_NAME, $this->pageSize, \PDO::PARAM_INT);
+        $this->setParamTypeByName(self::OFFSET_PARAM_NAME, \PDO::PARAM_INT);
+        $this->setParamTypeByName(self::PAGE_SIZE_PARAM_NAME, \PDO::PARAM_INT);
+
+        $this->setParamValueByName(self::OFFSET_PARAM_NAME, $offset);
+        $this->setParamValueByName(self::PAGE_SIZE_PARAM_NAME, $this->pageSize);
 
         $sqlError = false;
         $sqlResultRows = [];
         $totalPages = 0;
-        if ($this->stmt->execute() === false) {
+
+        $stmt = $this->prepareSelectStm($this->getSelectStmInPages());
+         if ($stmt->execute() === false) {
             $sqlError = true;
         }
         else {
-            $stmtResult = $this->stmt->fetchAll(\PDO::FETCH_ASSOC);
-            $this->stmt->closeCursor();
+            $stmtResult = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $stmt->closeCursor();
 
             $queryTotalRows = true;
             $totalRowCount = 0;
@@ -75,10 +88,7 @@ class SelectPages {
             }
 
             if ($queryTotalRows === true) {
-                $totalRowsStmt = $this->db->prepare($this->getTotalRowsSelectStm());
-                foreach ($bindValues as $key => $value) {
-                    $totalRowsStmt->bindValue($key, $value);
-                }
+                $totalRowsStmt = $this->prepareSelectStm($this->getTotalRowsSelectStm());
                 if ($totalRowsStmt->execute() === false) {
                     $sqlError = true;
                 }
@@ -95,6 +105,20 @@ class SelectPages {
             $pageNo,
             $totalPages,
         );
+    }
+
+    private function prepareSelectStm(string $selectStmtStr): \PDOStatement {
+        $stmt = $this->db->prepare($this->sqlParamsAccessor->parse($selectStmtStr));
+        for ($i = 1; $i <= $this->sqlParamsAccessor->getParamCount(); $i++) {
+            $paramName = $this->sqlParamsAccessor->getParamNameByIndex($i);
+            $paramType = $this->sqlParamsAccessor->getParamTypeByName($paramName);
+            $paramValue = $this->sqlParamsAccessor->getParamValueByName($paramName);
+            
+            //echo 'i: ' . $i . '/ paramName: ' . $paramName . '/ paramValue: ' . $paramValue . '/ paramType: ' . $paramType . "\n";
+            
+            $stmt->bindValue($i, $paramValue, $paramType);
+        }
+        return $stmt;
     }
 
     private function getTotalPages(int $totalRows): int {

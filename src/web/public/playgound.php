@@ -11,6 +11,7 @@
    require_once(__DIR__ . '/inc/SelectPages.php');
    require_once(__DIR__ . '/inc/SelectPagesSqlProvider.php');
    require_once(__DIR__ . '/inc/SelectPagesSqlProviderMsSqlServer.php');
+   require_once(__DIR__ . '/inc/SqlParamsAccessor.php');
 
 
    $dbh = new PDO("sqlsrv:Server=".$_ENV["DB_HOST"].";Database=".$_ENV["DB_NAME"],
@@ -22,9 +23,11 @@
     $selectPages = new SelectPages\SelectPages(
         $dbh,
         $sqlServerSelectPagesSqlProvider,
-        'SELECT * FROM dbo.WP_Nachricht order by NachrichtenBetreff',
+        'SELECT * FROM dbo.WP_Nachricht where AbsenderUser_ID = :AbsenderUser_ID order by NachrichtenBetreff',
         5
     );
+    $selectPages->setParamTypeByName('AbsenderUser_ID', PDO::PARAM_INT);
+    $selectPages->setParamValueByName('AbsenderUser_ID', 3);
     $result = $selectPages->fetch(1);
     print_r($result);
 ?>
